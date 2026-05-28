@@ -16,6 +16,7 @@ The official Moodle Mobile App — an Angular + Ionic + Cordova hybrid app for i
 - [docs/windows-fixes.md](docs/windows-fixes.md) — Permanent Windows fixes already applied (bash fix, session logs)
 - [docs/android-build-setup.md](docs/android-build-setup.md) — JDK 17 + Android Studio setup, env vars, APK build commands
 - [docs/browser-cors-fix.md](docs/browser-cors-fix.md) — Fix for `serverconnectionajax` / status 0 errors when using `npm start` in browser
+- [docs/wsl2-android-setup.md](docs/wsl2-android-setup.md) — WSL2 Ubuntu setup for APK builds (Node 20, JDK 17, Android SDK CLI, Claude Code install)
 
 ## Commands
 
@@ -96,3 +97,55 @@ To override for local dev: create `moodle.config.local.json` (gitignored).
 - Test files: `**/*.test.ts` (co-located with source)
 - Test utilities/mocks: `src/testing/`
 - Module path aliases from `tsconfig.paths` are mapped in `jest.config.js`
+
+## WSL2 Android Build (Preferred for APK builds)
+
+Build APKs inside WSL2 Ubuntu — not Windows PowerShell. Faster node_modules, no path issues.
+
+### One-time setup (run in Ubuntu WSL2)
+
+```bash
+# 1. Copy project into WSL filesystem (never build from /mnt/)
+cp -r /mnt/f/Asad/Freelancing/Samantha\ App/moodleapp ~/projects/moodleapp
+cd ~/projects/moodleapp
+
+# 2. Install Node 20 + JDK 17
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs git openjdk-17-jdk unzip wget
+
+# 3. Install Android SDK CLI tools
+mkdir -p ~/android-sdk/cmdline-tools && cd ~/android-sdk/cmdline-tools
+wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+unzip commandlinetools-linux-*.zip && mv cmdline-tools latest
+
+# 4. Set env vars (add to ~/.bashrc)
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export ANDROID_HOME=$HOME/android-sdk
+export PATH=$PATH:$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+# 5. Accept licenses + install SDK
+yes | sdkmanager --licenses
+sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+# 6. Install Claude Code in WSL2
+npm install -g @anthropic-ai/claude-code
+```
+
+### Verify before building
+
+```bash
+java -version   # must show 17.x
+adb --version
+node -v         # 20.x
+```
+
+### Build commands (same as Windows)
+
+```bash
+npm install
+gulp
+npm run prod:android   # production APK
+npm run dev:android    # debug APK with live reload
+```
+
+> Claude Code must be installed **inside WSL2** (not Windows) to run these builds. A Windows symlink does not work.
