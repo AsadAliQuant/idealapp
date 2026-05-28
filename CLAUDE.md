@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The official Moodle Mobile App — an Angular + Ionic + Cordova hybrid app for iOS and Android (v5.2.0). It connects to any Moodle LMS via Web Services.
 
+- **Source repo (Asad's fork)**: https://github.com/AsadAliQuant/idealapp.git — clone from here, not moodlehq
 - Developer docs: https://moodledev.io/general/app
 - Bug tracker: https://moodle.atlassian.net/browse/MOBILE
 
