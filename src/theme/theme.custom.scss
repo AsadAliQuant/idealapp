@@ -9,7 +9,17 @@
  * -------------------------------------------
  */
 :root {
+    // Primary brand color: teal #4F9BAD
+    --ion-color-primary: #4F9BAD;
+    --ion-color-primary-rgb: 79, 155, 173;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-contrast-rgb: 255, 255, 255;
+    --ion-color-primary-shade: #216D92;
+    --ion-color-primary-tint: #B3DDDD;
 
+    // Notification badge: purple #AA4BC7
+    --core-notification-badge-color: #AA4BC7;
+    --core-notification-badge-text-color: #ffffff;
 }
 
 /*
