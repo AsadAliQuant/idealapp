@@ -86,23 +86,23 @@ java -version   # should show openjdk 17
 
 ```bash
 # Create SDK directory
-mkdir -p ~/android-sdk/cmdline-tools
+mkdir -p ~/Android/Sdk/cmdline-tools
 
 # Download command line tools
-cd ~/android-sdk/cmdline-tools
+cd ~/Android/Sdk/cmdline-tools
 wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
 unzip commandlinetools-linux-11076708_latest.zip
 mv cmdline-tools latest
 rm commandlinetools-linux-11076708_latest.zip
 
 # Install platform tools and build tools
-~/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
+~/Android/Sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/Android/Sdk \
   "platform-tools" \
-  "build-tools;35.0.0" \
-  "platforms;android-35"
+  "build-tools;36.0.0" \
+  "platforms;android-36"
 
 # Accept licenses
-yes | ~/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses
+yes | ~/Android/Sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/Android/Sdk --licenses
 ```
 
 ---
@@ -118,11 +118,11 @@ cat >> ~/.bashrc << 'EOF'
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 # Android SDK
-export ANDROID_HOME=$HOME/android-sdk
+export ANDROID_HOME=$HOME/Android/Sdk
 export ANDROID_SDK_ROOT=$ANDROID_HOME
 export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
 export PATH=$PATH:$ANDROID_HOME/platform-tools
-export PATH=$PATH:$ANDROID_HOME/build-tools/35.0.0
+export PATH=$PATH:$ANDROID_HOME/build-tools/36.0.0
 EOF
 
 source ~/.bashrc
@@ -147,7 +147,16 @@ npm install -g gulp-cli
 
 # Install project dependencies
 npm install
+
+# Fix: cross-env may not land in node_modules/.bin after npm install due to
+# postinstall ordering. Install it explicitly with --ignore-scripts to bypass that:
+npm install cross-env@10.1.0 --save-dev --ignore-scripts
+
+# Also ensure cordova-plugin-moodleapp has its own deps:
+cd cordova-plugin-moodleapp && npm install && cd ..
 ```
+
+> **Why the cross-env workaround?** The postinstall runs `cd cordova-plugin-moodleapp && npm install` after the root install. This sometimes causes npm's hoisting to leave `cross-env` out of the root `node_modules/.bin/`. The `--ignore-scripts` install adds it without re-triggering that race. If you ever see `sh: cross-env: not found` during a build, re-run the two lines above.
 
 ---
 
@@ -190,12 +199,21 @@ cd ~/projects/samantha-moodleapp
 # First time only — preprocess lang files and env config
 gulp
 
-# Development build + run on Android
+# Build APK (production Angular bundle, debug APK signing)
 npm run prod:android
-
-# Or just build APK without running
-npm run build:prod
 ```
+
+**First build only:** Cordova auto-downloads Gradle 8.14.2 (~130 MB) from `services.gradle.org` via its wrapper. Needs internet. Takes ~5–6 minutes. Subsequent builds use the cached daemon and finish in ~20–30 seconds.
+
+**APK output:** `platforms/android/app/build/outputs/apk/debug/app-debug.apk`
+
+> **Note on APK type:** `--prod` sets Angular to production mode (minified bundle) but does **not** produce a signed release APK. The output is always a debug APK unless you add `--release` with a keystore configured. For sideloading and testing, the debug APK is fine.
+
+**What the `prod:android` script does** (for reference):
+1. Builds `cordova-plugin-moodleapp` native code
+2. Runs `gulp` (lang + env preprocessing)
+3. Runs `ng build` (Angular production bundle into `www/`)
+4. Runs `cordova build android --no-restore` (compiles Java/Kotlin + packages APK)
 
 ---
 
@@ -237,5 +255,15 @@ The `CLAUDE.md` in the repo root will give Claude Code full project context auto
 - [ ] Android SDK + build-tools + platform
 - [ ] Environment variables in `~/.bashrc`
 - [ ] `npm install` completed without errors
-- [ ] `adb devices` shows your device
+- [ ] `cross-env` fix applied (Step 5 — `npm install cross-env@10.1.0 --save-dev --ignore-scripts`)
+- [ ] `adb devices` shows your device (or skip if only building APK, not deploying)
 - [ ] Claude Code installed + `~/.claude` symlinked from Windows
+- [ ] First `npm run prod:android` run completes (downloads Gradle — needs internet)
+
+## Known issues fixed (already applied to this repo)
+
+| Issue | Symptom | Fix applied |
+|---|---|---|
+| `cross-env: not found` | Build fails immediately after plugin build | `npm install cross-env --save-dev --ignore-scripts` in root and cordova-plugin-moodleapp |
+| Cordova plugin restore fails | `Cannot find module 'cordova-plugin-moodleapp/package.json'` — exit code 1 even though APK built | `prod:android` script changed to `ionic cordova build android -- --no-restore` |
+| No `gradlew` in platform | First-time Gradle missing | Cordova wrapper auto-downloads Gradle 8.14.2 on first build (internet required) |

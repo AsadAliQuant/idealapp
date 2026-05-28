@@ -115,18 +115,19 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs git openjdk-17-jdk unzip wget
 
 # 3. Install Android SDK CLI tools
-mkdir -p ~/android-sdk/cmdline-tools && cd ~/android-sdk/cmdline-tools
+mkdir -p ~/Android/Sdk/cmdline-tools && cd ~/Android/Sdk/cmdline-tools
 wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
 unzip commandlinetools-linux-*.zip && mv cmdline-tools latest
 
 # 4. Set env vars (add to ~/.bashrc)
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-export ANDROID_HOME=$HOME/android-sdk
-export PATH=$PATH:$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+export ANDROID_HOME=$HOME/Android/Sdk
+export ANDROID_SDK_ROOT=$ANDROID_HOME
+export PATH=$PATH:$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/36.0.0
 
 # 5. Accept licenses + install SDK
 yes | sdkmanager --licenses
-sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
 # 6. Install Claude Code in WSL2
 npm install -g @anthropic-ai/claude-code
@@ -140,13 +141,22 @@ adb --version
 node -v         # 20.x
 ```
 
-### Build commands (same as Windows)
+### Build commands
 
 ```bash
 npm install
+# If cross-env is missing after npm install (symptom: "sh: cross-env: not found"):
+npm install cross-env@10.1.0 --save-dev --ignore-scripts
+cd cordova-plugin-moodleapp && npm install && cd ..
+
 gulp
-npm run prod:android   # production APK
-npm run dev:android    # debug APK with live reload
+npm run prod:android   # builds APK — first run downloads Gradle 8.14.2 (~130MB, ~5 min)
 ```
+
+**APK output:** `platforms/android/app/build/outputs/apk/debug/app-debug.apk`
+
+**First build:** Cordova auto-downloads Gradle 8.14.2 via its wrapper (internet required, ~5–6 min). Subsequent builds ~20–30s.
+
+**`prod:android` uses `ionic cordova build` (not `run`)** — `run` requires a connected device. `build` just produces the APK. The `--no-restore` flag is also set to skip a broken Cordova plugin resolution step that caused exit code 1 even when the build succeeded.
 
 > Claude Code must be installed **inside WSL2** (not Windows) to run these builds. A Windows symlink does not work.
