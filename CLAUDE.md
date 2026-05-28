@@ -14,7 +14,7 @@ The official Moodle Mobile App — an Angular + Ionic + Cordova hybrid app for i
 
 - [docs/dev-environment.md](docs/dev-environment.md) — Windows setup status, installed tool versions, current state, how to run
 - [docs/tech-stack.md](docs/tech-stack.md) — All dependency versions (Angular, Ionic, Cordova, plugins, testing tools) for debugging
-- [docs/windows-fixes.md](docs/windows-fixes.md) — Permanent Windows fixes already applied (bash fix, session logs)
+- [docs/fixes.md](docs/fixes.md) — All permanent fixes, workarounds, and detailed debug session logs (Windows + WSL2)
 - [docs/android-build-setup.md](docs/android-build-setup.md) — JDK 17 + Android Studio setup, env vars, APK build commands
 - [docs/browser-cors-fix.md](docs/browser-cors-fix.md) — Fix for `serverconnectionajax` / status 0 errors when using `npm start` in browser
 - [docs/wsl2-android-setup.md](docs/wsl2-android-setup.md) — WSL2 Ubuntu setup for APK builds (Node 20, JDK 17, Android SDK CLI, Claude Code install)
